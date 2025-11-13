@@ -1,319 +1,301 @@
-🚀 Core Functionality
-✅ 1. Recognition (Send Kudos)
 
+# 🚀 Boostly: Peer Recognition & Rewards Platform
+
+Boostly is a secure recognition and rewards platform where students can appreciate peers by sending credits, endorsing recognitions, redeeming earned points, and tracking progress through leaderboards.  
+Built with Java (Spring Boot) for the backend and Next.js (React) for the frontend, it emphasizes security, atomicity, and transparency through audit logging.
+
+---
+
+## ⚙️ Core Functionalities
+
+### 1. Recognition (Send Kudos)
 Allows one student to recognize another by transferring credits.
 
-Business Rules:
+**Business Rules:**
+- Each student receives 100 system credits per month.
+- Self-recognition is blocked.
+- Cannot send more credits than available.
+- Monthly send limit: 100 credits.
+- Atomic DB updates prevent race conditions and double-spending.
+- Idempotent requests using `clientRequestId`.
 
-Each student receives 100 system credits per month.
+**Status:** Fully implemented  
+**Security:** Enforced at DB and application levels  
+**Audited:** Yes
 
-Cannot send credits to oneself (self-recognition blocked).
+---
 
-Cannot send more credits than available.
+### 2. Endorsements (Likes/Cheers)
+Students can endorse an existing recognition.
 
-Monthly send limit = 100 credits.
+**Business Rules:**
+- One endorsement per recognition per user.
+- Endorsements do not transfer credits.
+- Atomic counter increment for endorsements.
 
-Atomic DB updates prevent race conditions & double-spending.
+**Status:** Fully implemented  
+**Security:** Permission-protected  
+**Audited:** Yes
 
-Each request is idempotent using clientRequestId.
+---
 
-Status: Fully implemented
-Security: Enforced at DB + application level
-Audited: Yes
+### 3. Redemption (Convert to Voucher)
+Students can convert earned (received) credits into redeemable vouchers.
 
-✅ 2. Endorsements (Likes/Cheers)
+**Business Rules:**
+- Only received credits are redeemable.
+- Redemption rate: ₹5 per credit.
+- Received credit balance decreases permanently after redemption.
+- Atomic updates prevent negative balances.
 
-Students can endorse a recognition.
+**Status:** Fully implemented  
+**Security:** Ownership enforced  
+**Audited:** Yes
 
-Business Rules:
+---
 
-One endorsement per recognition per user.
+### 4. Monthly Reset & Carry Forward
+A scheduled and idempotent job resets system credits and enforces carry-forward limits.
 
-Endorsements DO NOT transfer credits.
+**Business Rules:**
+- Reset to 100 system credits monthly.
+- Carry forward up to 50 unused credits.
+- Reset monthly send limit.
+- Uses `system_runs` table for idempotency.
 
-Endorsements increment a counter via atomic updates.
+**Status:** Fully implemented  
+**Security:** Admin-only  
+**Audited:** Yes
 
-Status: Fully implemented
-Security: Permission-protected
-Audited: Yes
+---
 
-✅ 3. Redemption (Convert to Voucher)
-
-Students redeem earned credits at ₹5 per credit.
-
-Business Rules:
-
-Only credits received (not system credits) can be redeemed.
-
-Redemption reduces received_credits_balance permanently.
-
-Atomic conditional updates prevent negative balance.
-
-Status: Fully implemented
-Security: Ownership enforced
-Audited: Yes
-
-✅ 4. Monthly Reset & Carry Forward
-
-A scheduled/resettable job that:
-
-Resets system credits to 100 monthly.
-
-Carries forward up to 50 unused credits.
-
-Resets monthly send limit.
-
-Idempotent using system_runs table.
-
-Status: Fully implemented
-Security: Admin-only
-Audited: Yes
-
-✅ 5. Leaderboard
-
+### 5. Leaderboard
 Displays top recipients sorted by:
-
-Credits received
-
-Recognitions count
-
-Endorsements count
+1. Credits received
+2. Recognitions count
+3. Endorsements count  
 
 Tie-breaker: Student ID
 
-Status: Fully implemented
-Security: Requires leaderboard:read permission
+**Status:** Fully implemented  
+**Security:** Requires `leaderboard:read` permission
 
-🔐 6. Security Model (Very Important)
-🔑 API Key Structure
+---
 
-All requests must include:
+## 🔐 Security Model
 
+### API Key Structure
+
+All API requests must include:
+```
 X-API-KEY: keyId.secret
+```
 
+- `keyId` = public identifier  
+- `secret` = one-time visible token (hashed in the database)
 
-keyId = public identifier
+**Key Types:**
+- Admin keys  
+- Student (frontend) keys bound to `owner_student_id`
 
-secret = one-time visible token (hashed in DB)
+---
 
-Keys can be:
+### Enforcement Principles
 
-admin keys
+| Security Principle | Implementation |
+|--------------------|----------------|
+| Least Privilege | Role-permission model; ownership binding |
+| Complete Mediation | All routes filtered by `APIKeyAuthFilter` + `PermissionAspect` |
+| Secure by Default | Deny all by default; explicit permission required |
+| Open Design | Transparent security and DB constraint architecture |
+| Defense in Depth | DB constraints, app checks, audit logs, rate limits |
+| Separation of Privilege | Admin-only operations for key management |
+| Economy of Mechanism | Simple atomic SQL updates, minimal locks |
+| Psychological Acceptability | Clear UX and consistent auth flow |
+| Minimize Attack Surface | Only `/api/*` endpoints exposed |
+| Log and Detect | Comprehensive `audit_logs` tracking |
 
-frontend student keys (bound to owner_student_id)
+---
 
-🔐 Enforcement Layers
+## 🛠️ Technology Stack
 
-Boostly implements 10 layers of security (matching your principles):
+### Backend
+- Java + Spring Boot  
+- Spring Web, Data JPA  
+- SQLite (zero-config, file-based) with HikariCP  
+- Lombok  
+- Scheduled jobs  
+- Aspect-oriented permissions (`@RequiresPermission`)  
 
-Security Principle	Implementation
-Least Privilege	Role-permission model, ownership binding
-Complete Mediation	Every request passes APIKeyAuthFilter + PermissionAspect
-Secure by Default	All endpoints deny without a valid key
-Open Design	No obscurity, explicit DB rules & audit logs
-Defense in Depth	DB constraints, application checks, audit logs, rate-limit
-Separation of Privilege	Admin-only routes for key mgmt/reset
-Economy of Mechanism	Simple atomic SQL updates, no complex locks
-Psychological Acceptability	Clean UX, simple auth
-Minimize Attack Surface	Only /api/* exposed
-Log and Detect	Full audit_logs table
+### Database Features
+- Foreign keys, triggers, and CHECK constraints  
+- WAL journaling mode for high concurrency  
+- Strict schema design with triggers for data integrity  
+- Indexing for optimized leaderboard queries
 
-Status: Fully implemented end-to-end.
+### Frontend
+- Next.js 14+, React 18  
+- TailwindCSS (Samsung One-UI + Instagram inspired)  
+- Axios for API interaction  
+- Toast notifications  
+- Jest + Testing Library for frontend testing  
 
-🛠 Technology & Frameworks Used
-Backend (Java + Spring Boot)
+---
 
-Spring Web
+## 🌐 API Endpoints
 
-Spring Data JPA
-
-SQLite JDBC driver
-
-HikariCP (connection pool)
-
-Lombok
-
-Scheduled jobs
-
-Custom security filters
-
-Aspect-oriented Authorization (@RequiresPermission)
-
-Database
-
-SQLite (zero-config, file-based)
-
-Strict schema with:
-
-CHECK constraints
-
-Foreign keys
-
-Triggers
-
-Indexes
-
-WAL mode
-
-Frontend
-
-Next.js 14+
-
-React 18
-
-TailwindCSS (One-UI + Instagram inspired)
-
-Axios
-
-Toast/Notifications (custom)
-
-Jest + Testing Library (unit tests)
-
-🧩 How to Access Each Functionality
-Base URL (local):
+**Base URL (local):**
+```
 http://localhost:8080/api
+```
 
-Required Header:
+**Required Header:**
+```
 X-API-KEY: keyId.secret
+```
 
-🔵 1. Send Recognition
+### Endpoints
 
+1. **Send Recognition**  
+```
 POST /api/recognitions
-
-Example:
-
+```
+Example Request:
+```
 {
   "senderId": 1,
   "receiverId": 2,
   "credits": 10,
   "clientRequestId": "uuid-123"
 }
+```
 
-🔵 2. Endorse Recognition
-
+2. **Endorse Recognition**  
+```
 POST /api/endorsements
+```
 
-🔵 3. Redeem Credits
-
+3. **Redeem Credits**  
+```
 POST /api/redemptions
+```
 
-🔵 4. Leaderboard
-
+4. **Leaderboard**  
+```
 GET /api/leaderboard?limit=10
+```
 
-🔵 5. Admin Key Management
+5. **Admin Key Management**  
+```
 POST /api/admin/apikeys/create
 POST /api/admin/apikeys/revoke
 POST /api/admin/apikeys/rotate
+```
 
-🖥️ Commands to Run
-1. Install dependencies
+---
+
+## 💻 Setup Instructions
+
+### 1. Install Dependencies
+```
 sudo apt install sqlite3
+```
 
-2. Apply DB migrations
+### 2. Apply Database Migrations
+```
 sqlite3 boostly.db < migrations/000_schema.sql
+```
 
-3. Build backend
+### 3. Build Backend
+```
 mvn clean package
+```
 
-4. Run backend
+### 4. Run Backend
+```
 java -jar target/boostly-backend.jar
+```
 
-5. Run frontend
+### 5. Run Frontend
+```
 cd frontend
 npm install
 npm run dev
+```
 
-6. Run demo script
+### 6. Run Demo Script
+```
 bash demo/demo.sh
+```
 
-7. Run frontend tests
+### 7. Run Frontend Tests
+```
 npm test
+```
 
-🧪 Edge Cases Handled
-✔ Atomic credit deduction
+---
 
-Prevents double-spending during race conditions.
+## 🧪 Edge Cases Handled
 
-✔ Self-recognition blocked
+- Atomic credit deductions (no race conditions)
+- Self-recognition blocked (application + DB trigger)
+- Monthly credit send limit strictly enforced
+- Unique endorsement per user per recognition
+- Idempotent write operations using `clientRequestId`
+- API key bound to `student_id` for ownership enforcement
+- Revoked keys immediately unauthorized
+- Per-key rate limiting with token bucket algorithm
+- Secure DB enforcement using constraints and triggers
+- Strict carry-forward limit of 50 credits
+- Deterministic leaderboard sorting rules
+- Comprehensive audit logs for:
+  - Recognitions
+  - Endorsements
+  - Redemptions
+  - API key events
+  - System reset runs
 
-DB trigger + application check.
+---
 
-✔ Sender cannot exceed monthly limit
+## 🧩 Testing Framework
 
-Atomic update ensures limit enforcement.
+**Included Tests:**
+- SQL-based dry-run files for data validation
+- Jest + Testing Library for frontend units
+- JUnit templates for backend services
+- Postman collection under `postman/boostly_collection.json`
 
-✔ Endorsement uniqueness
+**Postman Environment Variables:**
+- `admin_api_key`
+- `user_api_key`
+- `base_url`
 
-DB UNIQUE(sender, recognition).
+---
 
-✔ Idempotency for all write operations
+## 🎨 Frontend Design
 
-Using clientRequestId.
+**Inspiration:**
+- Samsung One-UI for touch-friendly layout and clear visuals  
+- Instagram for social card design and activity feed interactions  
 
-✔ Ownership binding to API keys
+**UX Design Features:**
+- Toast notifications for feedback  
+- Inline form validation  
+- UUID auto-generation for idempotency  
+- Mobile-friendly layouts  
+- Bottom navigation for easy access  
 
-A key for student_id = 1 cannot act on student_id = 2.
+---
 
-✔ Revoked keys cannot authenticate
-✔ Rate limiting
+## 📜 License
+Open-sourced for educational and non-commercial use under the MIT License.
 
-Token bucket per API key (429 on abuse).
+---
 
-✔ Secure DB constraints
+## 👨‍💻 Contributors
+**Backend:** Java + Spring Boot  
+**Frontend:** Next.js + React  
+**Database:** SQLite  
 
-CHECK + foreign keys + triggers.
+---
 
-✔ Carry-forward limit strictly max 50
-✔ Leaderboard deterministic tie-breakers
-✔ Audit logs for:
-
-recognitions
-
-endorsements
-
-redemptions
-
-key actions
-
-system resets
-
-🧪 Testing
-
-Included:
-
-SQL-based dry-run test file
-
-Jest frontend tests
-
-JUnit backend tests (templates included)
-
-Postman collection with environment variables
-
-admin_api_key
-
-user_api_key
-
-base_url
-
-File: postman/boostly_collection.json
-
-🎨 Frontend Design Notes
-
-Inspired by:
-
-Samsung One-UI → big tap areas, rounded corners, clear spacing
-
-Instagram → activity feed layout, endorsements button, card visuals
-
-User-friendly features:
-
-Toast notifications
-
-Mobile bottom navigation
-
-Clean card-based feed
-
-Auto-generated UUID for idempotency
-
-Inline form validation
