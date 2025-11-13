@@ -1,0 +1,165 @@
+{
+  "info": {
+    "name": "Boostly API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Create API Key (admin)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-API-KEY",
+            "value": "{{admin_api_key}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"roleId\": 2, \"ownerStudentId\": 1}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/admin/apikeys/create",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "/api/admin/apikeys/create"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Send Recognition",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-API-KEY",
+            "value": "{{user_api_key}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"senderId\": 1, \"receiverId\": 2, \"credits\": 10, \"clientRequestId\": \"req-1\"}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/recognitions",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "/api/recognitions"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Endorse",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-API-KEY",
+            "value": "{{user_api_key}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"recognitionId\": 1, \"endorserId\": 2, \"clientRequestId\": \"endorse-1\"}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/endorsements",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "/api/endorsements"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Redeem",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-API-KEY",
+            "value": "{{user_api_key}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"studentId\": 2, \"credits\": 10, \"clientRequestId\": \"redeem-1\"}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/redemptions",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "/api/redemptions"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Leaderboard",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-KEY",
+            "value": "{{user_api_key}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/leaderboard?limit=10",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "/api/leaderboard"
+          ],
+          "query": [
+            {
+              "key": "limit",
+              "value": "10"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "admin_api_key",
+      "value": "REPLACE_ME"
+    },
+    {
+      "key": "user_api_key",
+      "value": "REPLACE_ME"
+    }
+  ]
+}
